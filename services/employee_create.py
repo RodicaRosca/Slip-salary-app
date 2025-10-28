@@ -2,7 +2,14 @@ from sqlalchemy.orm import Session
 from models.models import Employee, User, Role
 from api.schemas import EmployeeCreate, RoleEnum
 from fastapi import HTTPException
+from passlib.context import CryptContext
 
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
 def create_employee_service(session: Session, emp: EmployeeCreate):
     # Enforce that employees must have a manager_id, managers must not
@@ -19,11 +26,14 @@ def create_employee_service(session: Session, emp: EmployeeCreate):
         session.commit()
         session.refresh(role_obj)
 
+    # Hash the password
+    hashed_password = hash_password(emp.password)
+
     # Create user
     user = User(
         username=emp.username,
         email=emp.email,
-        password_hash=emp.password_hash,
+        password_hash=hashed_password,
         role_id=role_obj.id
     )
     session.add(user)
