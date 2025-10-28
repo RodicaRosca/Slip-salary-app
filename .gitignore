@@ -136,6 +136,11 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+postgres_data/
+archive/
+*.db
+*.sqlite3
 .envrc
 .venv
 env/
