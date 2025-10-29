@@ -9,6 +9,7 @@ from email.message import EmailMessage
 import os
 from datetime import datetime
 from core.auth import manager_required
+from core.idempotency import idempotency_key_dependency
 import traceback
 
 def get_db():
@@ -21,7 +22,11 @@ def get_db():
 router = APIRouter()
 
 @router.post("/sendPdfToEmployees")
-def send_pdf_to_employees(db: Session = Depends(get_db), current_user=Depends(manager_required)):
+def send_pdf_to_employees(
+    db: Session = Depends(get_db),
+    current_user=Depends(manager_required),
+    idempotency_key=Depends(idempotency_key_dependency)
+):
     employees = db.query(Employee).all()
     if not employees:
         raise HTTPException(status_code=404, detail="No employees found.")
