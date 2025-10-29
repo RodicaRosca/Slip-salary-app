@@ -48,6 +48,7 @@ def create_employee(emp: EmployeeCreate, db=Depends(get_db), current_user=Depend
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error.")
 
+
 @router.get("/managers")
 def get_managers(db=Depends(get_db), current_user=Depends(manager_required)):
     managers = get_all_managers_service(db)

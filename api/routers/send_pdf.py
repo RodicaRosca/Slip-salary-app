@@ -9,6 +9,7 @@ from email.message import EmailMessage
 import os
 from datetime import datetime
 from core.auth import manager_required
+import traceback
 
 def get_db():
     db = SessionLocal()
@@ -57,6 +58,8 @@ def send_pdf_to_employees(db: Session = Depends(get_db), current_user=Depends(ma
                 server.send_message(msg)
             sent_count += 1
         except Exception as e:
+            print(f"Error sending email to {emp.email}: {e}")
+            traceback.print_exc()
             errors.append({"employee": emp.email, "error": str(e)})
             continue
     return {"sent": sent_count, "total": len(employees), "errors": errors}
