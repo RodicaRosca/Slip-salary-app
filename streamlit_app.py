@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8000"  # Change if your FastAPI runs elsewhere
+API_URL = "http://localhost:8000"  
 
 def login():
     st.title("Login")
@@ -16,6 +16,29 @@ def login():
             st.rerun()
         else:
             st.error("Login failed. Check your credentials.")
+
+
+def logout():
+    st.session_state.pop("token", None)
+    st.success("Logged out successfully!")
+    st.rerun()  
+
+
+def generate_aggregated_report():
+    pass
+
+
+def generate_employee_report():
+    pass
+
+
+def send_salary_pdf():
+    pass
+
+
+def send_aggregated_employee_data():
+    pass
+
 
 def main():
     if "token" not in st.session_state:
