@@ -4,6 +4,7 @@ from services.salary_slip_create import create_salary_slip_service
 from api.salary_schemas import SalarySlipCreate
 from core.auth import manager_required
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -11,7 +12,9 @@ def get_db():
     finally:
         db.close()
 
+
 router = APIRouter()
+
 
 @router.post("/createSalarySlip")
 def create_salary_slip(slip: SalarySlipCreate, db=Depends(get_db), current_user=Depends(manager_required)):

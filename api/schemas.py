@@ -11,7 +11,7 @@ class RoleEnum(str, Enum):
 
 class EmployeeCreate(BaseModel):
     username: str
-    password: str  # Plain password, will be hashed
+    password: str  
     email: EmailStr
     first_name: str
     last_name: str
@@ -23,5 +23,5 @@ class EmployeeCreate(BaseModel):
     position: Optional[str] = None
     department: Optional[str] = None
     iban: Optional[str] = None
-    role: RoleEnum  # 'employee' or 'manager'
-    manager_id: Optional[int] = None  # Optional, for employees
+    role: RoleEnum  
+    manager_id: Optional[int] = None 

@@ -1,14 +1,9 @@
 import logging
 
-# Configure root logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
-# Reduce SQLAlchemy engine logs
-# sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
-# sqlalchemy_logger.setLevel(logging.WARNING)
-# sqlalchemy_logger.propagate = False
 sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
-sqlalchemy_logger.setLevel(logging.ERROR)  # Only show errors, not info or warnings
+sqlalchemy_logger.setLevel(logging.ERROR)  
 sqlalchemy_logger.propagate = False
 
 def setup_request_logging(app):
