@@ -66,6 +66,5 @@ def create_employee_service(session: Session, emp: EmployeeCreate):
         raise e
     except Exception as e:
         session.rollback()
-        # Optionally, log the error here
         print(f"Error creating employee: {e}")
         raise HTTPException(status_code=500, detail="Internal server error while creating employee.")
