@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI
 from api.routers import employee, salary_slip
 from api.routers import pdf
@@ -17,5 +18,4 @@ app.include_router(auth.router)
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
