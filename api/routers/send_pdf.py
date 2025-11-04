@@ -1,6 +1,7 @@
 import os
 import smtplib
 import traceback
+import glob
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
@@ -10,7 +11,7 @@ from datetime import datetime
 from core.auth import manager_required
 from core.idempotency import idempotency_key_dependency
 from services.pdf_generator import generate_salary_pdf
-# from services.employee_report import generate_employee_salary_report
+from services.employee_report import generate_employee_salary_report
 
 
 def get_db():
@@ -39,7 +40,6 @@ def create_report_for_managers(
         if not employees:
             return {"generated": False, "error": "No employees found for this manager."}
         
-        from services.employee_report import generate_employee_salary_report
         excel_bytes = generate_employee_salary_report(db, employees=employees)
         archive_path = os.path.join(archive_dir, f"salary_report_{timestamp}.xlsx")
         with open(archive_path, "wb") as f:
@@ -58,14 +58,18 @@ def create_pdf_for_employees(
     idempotency_key=Depends(idempotency_key_dependency)
 ):
     employees = db.query(Employee).filter(Employee.manager_id == current_user.id).all()
-    print(current_user.id)
-    employees = db.query(Employee).filter(Employee.manager_id == current_user.id).all()
-    print("Employees found:", employees)
     if not employees:
-        raise HTTPException(status_code=404, detail="No employees found for this manager.")
+        return {"generated": False, "error": f"No employees found for manager_id {current_user.id}", "manager_id": current_user.id}
 
     archive_dir = os.path.join(os.getcwd(), "archive")
     os.makedirs(archive_dir, exist_ok=True)
+    # Remove old PDFs before generating new ones
+    for old_pdf in glob.glob(os.path.join(archive_dir, "salary_slip_*.pdf")):
+        try:
+            os.remove(old_pdf)
+        except Exception as e:
+            print(f"Could not remove old PDF {old_pdf}: {e}")
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     generated = []
     errors = []
@@ -77,15 +81,17 @@ def create_pdf_for_employees(
             with open(archive_path, "wb") as f:
                 f.write(pdf_bytes)
             generated.append({"employee": emp.email, "file": archive_path})
-        except Exception as e:
+        except ValueError as e:
             print(f"Error generating PDF for {emp.email}: {e}")
-            traceback.print_exc()
             errors.append({"employee": emp.email, "error": str(e)})
+        except Exception as e:
+            print(f"Internal error generating PDF for {emp.email}: {e}")
+            traceback.print_exc()
+            errors.append({"employee": emp.email, "error": "Internal server error."})
             continue
     return {"generated": generated, "errors": errors}
 
 
-router = APIRouter()
 @router.post("/sendReportToManagers")
 def send_report_to_managers(
     db: Session = Depends(get_db),
