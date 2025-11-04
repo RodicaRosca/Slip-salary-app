@@ -8,6 +8,8 @@ from services.employee_create import create_employee_service
 from services.employee_query import get_all_employees_service, get_all_managers_service
 from api.schemas import EmployeeCreate
 from fastapi.encoders import jsonable_encoder
+from models.models import User
+from sqlalchemy.orm import Session
 
 
 def get_db():
@@ -40,7 +42,7 @@ def create_aggregated_employee_data(db=Depends(get_db), current_user=Depends(man
     headers = {
         'Content-Disposition': 'attachment; filename="aggregated_employee_data.xlsx"'
     }
-    
+
     return Response(content=excel_bytes, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers=headers)
 
 @router.post("/createEmployee")
@@ -64,3 +66,17 @@ def get_managers(db=Depends(get_db), current_user=Depends(manager_required)):
 def get_employees(db=Depends(get_db), current_user=Depends(manager_required)):
     employees = get_all_employees_service(db)
     return jsonable_encoder(employees)
+
+
+@router.get("/users", response_model=list[dict])
+def list_all_users(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    return [
+        {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role.name if user.role else None
+        }
+        for user in users
+    ]
