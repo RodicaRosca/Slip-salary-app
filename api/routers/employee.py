@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 from fastapi import APIRouter, Response, HTTPException, Depends
 from core.auth import manager_required
 from db.session import SessionLocal
@@ -7,6 +9,7 @@ from services.employee_query import get_all_employees_service, get_all_managers_
 from api.schemas import EmployeeCreate
 from fastapi.encoders import jsonable_encoder
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -14,27 +17,30 @@ def get_db():
     finally:
         db.close()
 
+
 router = APIRouter()
+
 
 @router.get("/")
 async def read_root(current_user=Depends(manager_required)):
     return {"Hello": "World"}
 
+
 @router.get("/createAggregatedEmployeeData")
 def create_aggregated_employee_data(db=Depends(get_db), current_user=Depends(manager_required)):
-    import os
-    from datetime import datetime
     excel_bytes = generate_employee_salary_report(db)
     # Archive the Excel file
     archive_dir = os.path.join(os.getcwd(), "archive")
     os.makedirs(archive_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     archive_path = os.path.join(archive_dir, f"aggregated_employee_data_{timestamp}.xlsx")
+    
     with open(archive_path, "wb") as f:
         f.write(excel_bytes)
     headers = {
         'Content-Disposition': 'attachment; filename="aggregated_employee_data.xlsx"'
     }
+    
     return Response(content=excel_bytes, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers=headers)
 
 @router.post("/createEmployee")

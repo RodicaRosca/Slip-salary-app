@@ -1,16 +1,16 @@
+import os
+import smtplib
+import traceback
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from services.pdf_generator import generate_salary_pdf
-from services.employee_report import generate_employee_salary_report
 from models.models import Employee, User, Role
-import smtplib
 from email.message import EmailMessage
-import os
 from datetime import datetime
 from core.auth import manager_required
 from core.idempotency import idempotency_key_dependency
-import traceback
+from services.pdf_generator import generate_salary_pdf
+from services.employee_report import generate_employee_salary_report
 
 
 def get_db():
@@ -33,6 +33,7 @@ def create_report_for_managers(
     archive_dir = os.path.join(os.getcwd(), "archive")
     os.makedirs(archive_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     try:
         excel_bytes = generate_employee_salary_report(db)
         archive_path = os.path.join(archive_dir, f"salary_report_{timestamp}.xlsx")
@@ -52,6 +53,7 @@ def create_pdf_for_employees(
     idempotency_key=Depends(idempotency_key_dependency)
 ):
     employees = db.query(Employee).all()
+
     if not employees:
         raise HTTPException(status_code=404, detail="No employees found.")
 
@@ -60,6 +62,7 @@ def create_pdf_for_employees(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     generated = []
     errors = []
+
     for emp in employees:
         try:
             pdf_bytes = generate_salary_pdf(db, emp.id)
@@ -84,6 +87,7 @@ def send_report_to_managers(
 ):
     # Find all managers
     manager_role = db.query(Role).filter(Role.name == "manager").first()
+    
     if not manager_role:
         raise HTTPException(status_code=404, detail="Manager role not found.")
     managers = db.query(User).filter(User.role_id == manager_role.id).all()
@@ -101,6 +105,7 @@ def send_report_to_managers(
         return {"sent": 0, "total": 0, "errors": ["No archived Excel report found."]}
     latest_excel = max(excel_files, key=lambda x: x[len(prefix):-5])  # get the latest by timestamp
     excel_path = os.path.join(archive_dir, latest_excel)
+    
     with open(excel_path, "rb") as f:
         excel_bytes = f.read()
 
@@ -112,6 +117,7 @@ def send_report_to_managers(
 
     sent_count = 0
     errors = []
+    
     for manager in managers:
         try:
             msg = EmailMessage()
@@ -141,6 +147,7 @@ def send_pdf_to_employees(
     idempotency_key=Depends(idempotency_key_dependency)
 ):
     employees = db.query(Employee).all()
+    
     if not employees:
         raise HTTPException(status_code=404, detail="No employees found.")
 
@@ -154,7 +161,7 @@ def send_pdf_to_employees(
     errors = []
     archive_dir = os.path.join(os.getcwd(), "archive")
 
-    
+
     for emp in employees:
         # Find the latest PDF for this employee in the archive
         prefix = f"salary_slip_{emp.employee_id}_"
@@ -164,6 +171,7 @@ def send_pdf_to_employees(
             continue
         latest_pdf = max(pdf_files, key=lambda x: x[len(prefix):-4])  # get the latest by timestamp
         pdf_path = os.path.join(archive_dir, latest_pdf)
+        
         try:
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
