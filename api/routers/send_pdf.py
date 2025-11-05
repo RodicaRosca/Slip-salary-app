@@ -5,22 +5,13 @@ import glob
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
 from models.models import Employee
 from email.message import EmailMessage
 from datetime import datetime
-from core.auth import manager_required
+from core.auth import manager_required, get_db
 from core.idempotency import idempotency_key_dependency
 from services.pdf_generator import generate_salary_pdf
 from services.employee_report import generate_employee_salary_report
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 router = APIRouter()
