@@ -25,7 +25,6 @@ def generate_salary_pdf(session: Session, employee_id: int) -> bytes:
         if not slip:
             raise ValueError("Salary slip not found for this month")
 
-        # Generate PDF with professional layout
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4

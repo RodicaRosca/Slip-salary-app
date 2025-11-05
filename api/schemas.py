@@ -9,6 +9,27 @@ class RoleEnum(str, Enum):
     manager = 'manager'
 
 
+class SalarySlipCreate(BaseModel):
+    employee_id: int
+    month: str
+    base_salary: float
+    working_days: int
+    vacation_days: int
+    bonuses: Optional[float] = 0.0
+
+
+class SalarySlipResponse(BaseModel):
+    id: int
+    employee_id: int
+    month: str
+    base_salary: float
+    working_days: int
+    vacation_days: int
+    bonuses: float
+    total_salary: float
+    created_at: str
+
+
 class EmployeeCreate(BaseModel):
     username: str
     password: str  
@@ -24,4 +45,4 @@ class EmployeeCreate(BaseModel):
     department: Optional[str] = None
     iban: Optional[str] = None
     role: RoleEnum  
-    manager_id: Optional[int] = None 
+    manager_id: Optional[int] = None

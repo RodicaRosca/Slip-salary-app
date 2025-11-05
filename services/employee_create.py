@@ -62,7 +62,6 @@ def create_employee_service(session: Session, emp: EmployeeCreate):
         session.commit()
         return {"message": "Employee created successfully", "employee_id": employee.employee_id}
     except HTTPException as e:
-        # Re-raise HTTPExceptions for FastAPI to handle
         raise e
     except Exception as e:
         session.rollback()
