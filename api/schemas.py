@@ -9,15 +9,6 @@ class RoleEnum(str, Enum):
     manager = 'manager'
 
 
-class SalarySlipCreate(BaseModel):
-    employee_id: int
-    month: str
-    base_salary: float
-    working_days: int
-    vacation_days: int
-    bonuses: Optional[float] = 0.0
-
-
 class SalarySlipResponse(BaseModel):
     id: int
     employee_id: int
