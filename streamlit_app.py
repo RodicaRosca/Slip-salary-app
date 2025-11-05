@@ -67,10 +67,62 @@ def generate_aggregated_report():
 
 def generate_employee_report():
     st.write("Generating individual employee salary report...")
+    token = st.session_state.get("token")
+    if not token:
+        st.error("You must be logged in.")
+        return
 
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": str(uuid.uuid4())
+    }
+
+    response = requests.post(f"{API_URL}/createPdfForEmployees", headers=headers)
+    if response.status_code == 200:
+        result = response.json()
+        generated = result.get("generated", [])
+        errors = result.get("errors", [])
+        if generated:
+            st.success(f"PDFs generated for: {[item['employee'] for item in generated]}")
+        else:
+            error_msg = errors if errors else result
+            st.error(f"No PDFs generated: {error_msg}")
+    else:
+        try:
+            error_detail = response.json().get("detail", response.text)
+        except Exception:
+            error_detail = response.text
+        st.error(f"Failed to generate PDFs: {error_detail}")
 
 def send_salary_pdf():
     st.write("Sending salary PDF to employees...")
+    token = st.session_state.get("token")
+    if not token:
+        st.error("You must be logged in.")
+        return
+    
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": str(uuid.uuid4())
+    }
+    response = requests.post(f"{API_URL}/createPdfForEmployees", headers=headers)
+    if response.status_code == 200:
+        result = response.json()
+        generated = result.get("generated", [])
+        errors = result.get("errors", [])
+        if generated:
+            st.success(f"PDFs generated for: {[item['employee'] for item in generated]}")
+            # Optionally, show file paths or more info
+        else:
+            error_msg = errors if errors else result
+            st.error(f"No PDFs generated: {error_msg}")
+    else:
+        try:
+            error_detail = response.json().get("detail", response.text)
+        except Exception:
+            error_detail = response.text
+        st.error(f"Failed to generate PDFs: {error_detail}")
 
 
 def send_aggregated_employee_data():

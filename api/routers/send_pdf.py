@@ -67,7 +67,7 @@ def create_pdf_for_employees(
 
     archive_dir = os.path.join(os.getcwd(), "archive")
     os.makedirs(archive_dir, exist_ok=True)
-    # Remove old PDFs before generating new ones
+
     for old_pdf in glob.glob(os.path.join(archive_dir, "salary_slip_*.pdf")):
         try:
             os.remove(old_pdf)
@@ -166,7 +166,6 @@ def send_pdf_to_employees(
 
 
     for emp in employees:
-        # Find the latest PDF for this employee in the archive
         prefix = f"salary_slip_{emp.employee_id}_"
         pdf_files = [f for f in os.listdir(archive_dir) if f.startswith(prefix) and f.endswith(".pdf")]
         if not pdf_files:
