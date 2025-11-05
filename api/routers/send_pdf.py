@@ -46,7 +46,6 @@ def create_report_for_managers(
         with open(archive_path, "wb") as f:
             f.write(excel_bytes)
 
-        # You may want to send the report via email here, or just confirm generation
         return JSONResponse(status_code=200, content={"sent": 1, "errors": []})
     except Exception as e:
         print(f"Error generating Excel report: {e}")
