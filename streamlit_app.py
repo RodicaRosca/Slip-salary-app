@@ -43,14 +43,18 @@ def generate_aggregated_report():
         "Idempotency-Key": str(uuid.uuid4())
     }
     response = requests.post(f"{API_URL}/createReportForManagers", headers=headers)
-    if response.status_code == 200 and response.headers.get("content-type", "").startswith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
-        st.success("Report generated successfully!")
-        st.download_button(
-            label="Download Aggregated Employee Data Report",
-            data=response.content,
-            file_name="salary_report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    if response.status_code == 200 and response.content:
+        try:
+            result = response.json()
+            sent = result.get("sent", 0)
+            errors = result.get("errors", [])
+            if sent > 0 and not errors:
+                st.success("Aggregated report generated successfully!")
+            else:
+                error_msg = errors if errors else result
+                st.error(f"No report generated: {error_msg}")
+        except Exception:
+            st.error("Received invalid JSON from server.")
     else:
         try:
             error_json = response.json()
@@ -106,17 +110,17 @@ def send_salary_pdf():
         "Authorization": f"Bearer {token}",
         "Idempotency-Key": str(uuid.uuid4())
     }
-    response = requests.post(f"{API_URL}/createPdfForEmployees", headers=headers)
+    response = requests.post(f"{API_URL}/sendPdfToEmployees", headers=headers)
     if response.status_code == 200:
         result = response.json()
-        generated = result.get("generated", [])
+        sent_count = result.get("sent", 0)
+        total = result.get("total", 0)
         errors = result.get("errors", [])
-        if generated:
-            st.success(f"PDFs generated for: {[item['employee'] for item in generated]}")
-            # Optionally, show file paths or more info
+        if sent_count > 0:
+            st.success(f"PDFs sent to {sent_count} out of {total} employees.")
         else:
             error_msg = errors if errors else result
-            st.error(f"No PDFs generated: {error_msg}")
+            st.error(f"No PDFs sent: {error_msg}")
     else:
         try:
             error_detail = response.json().get("detail", response.text)
@@ -127,6 +131,40 @@ def send_salary_pdf():
 
 def send_aggregated_employee_data():
     st.write("Sending aggregated employee data to managers...")
+    token = st.session_state.get("token")
+    if not token:
+        st.error("You must be logged in.")
+        return
+    
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": str(uuid.uuid4())
+    }
+
+    response = requests.post(f"{API_URL}//sendReportToManagers", headers=headers)
+    if response.status_code == 200 and response.content:
+        try:
+            result = response.json()
+            st.success("Aggregated employee data sent to manager successfully!")
+            sent = result.get("sent", 0)
+            errors = result.get("errors", [])
+            if sent > 0:
+                st.success(f"Reports sent to {sent} managers.")
+            else:
+                error_msg = errors if errors else result
+                st.error(f"No reports sent: {error_msg}")
+        except Exception:
+            st.error("Received invalid JSON from server.")
+    else:
+        if response.content:
+            try:
+                error_detail = response.json().get("detail", response.text)
+            except Exception:
+                error_detail = response.text
+            st.error(f"Failed to send reports: {error_detail}")
+        else:
+            st.error("No response received from server.")
 
 
 def main():

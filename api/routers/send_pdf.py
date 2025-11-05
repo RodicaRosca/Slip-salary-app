@@ -2,7 +2,8 @@ import os
 import smtplib
 import traceback
 import glob
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.models import Employee
@@ -38,21 +39,19 @@ def create_report_for_managers(
     try:
         employees = db.query(Employee).filter(Employee.manager_id == current_user.id).all()
         if not employees:
-            raise HTTPException(status_code=404, detail="No employees found for this manager.")
+            return JSONResponse(status_code=200, content={"sent": 0, "errors": ["No employees found for this manager."]})
 
         excel_bytes = generate_employee_salary_report(db, employees=employees)
         archive_path = os.path.join(archive_dir, f"salary_report_{timestamp}.xlsx")
         with open(archive_path, "wb") as f:
             f.write(excel_bytes)
 
-        headers = {
-            'Content-Disposition': f'attachment; filename="salary_report_{timestamp}.xlsx"'
-        }
-        return Response(content=excel_bytes, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers=headers)
+        # You may want to send the report via email here, or just confirm generation
+        return JSONResponse(status_code=200, content={"sent": 1, "errors": []})
     except Exception as e:
         print(f"Error generating Excel report: {e}")
         traceback.print_exc()
-        return {"generated": False, "error": str(e)}
+        return JSONResponse(status_code=200, content={"sent": 0, "errors": [str(e)]})
 
 
 @router.post("/createPdfForEmployees")
