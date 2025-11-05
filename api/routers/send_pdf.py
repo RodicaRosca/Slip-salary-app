@@ -11,7 +11,8 @@ from datetime import datetime
 from core.auth import manager_required, get_db
 from core.idempotency import idempotency_key_dependency
 from services.pdf_generator import generate_salary_pdf
-from services.employee_report import generate_employee_salary_report
+#from services.employee_report import generate_employee_salary_report
+from services.reports_service import create_manager_report
 
 
 router = APIRouter()
@@ -23,21 +24,9 @@ def create_report_for_managers(
     current_user=Depends(manager_required),
     idempotency_key=Depends(idempotency_key_dependency)
 ):
-    archive_dir = os.path.join(os.getcwd(), "archive")
-    os.makedirs(archive_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
     try:
-        employees = db.query(Employee).filter(Employee.manager_id == current_user.id).all()
-        if not employees:
-            return JSONResponse(status_code=200, content={"sent": 0, "errors": ["No employees found for this manager."]})
-
-        excel_bytes = generate_employee_salary_report(db, employees=employees)
-        archive_path = os.path.join(archive_dir, f"salary_report_{timestamp}.xlsx")
-        with open(archive_path, "wb") as f:
-            f.write(excel_bytes)
-
-        return JSONResponse(status_code=200, content={"sent": 1, "errors": []})
+        result = create_manager_report(db, current_user.id)
+        return JSONResponse(status_code=200, content=result)
     except Exception as e:
         print(f"Error generating Excel report: {e}")
         traceback.print_exc()
