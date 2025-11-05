@@ -1,16 +1,10 @@
 from fastapi import APIRouter, HTTPException, Response, Depends
-from db.session import SessionLocal
 from services.pdf_generator import generate_salary_pdf
-from core.auth import manager_required
+from core.auth import manager_required, get_db
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 router = APIRouter()
+
 
 @router.get("/generateSalaryPdf/{employee_id}")
 def generate_salary_pdf_endpoint(employee_id: int, db=Depends(get_db), current_user=Depends(manager_required)):
