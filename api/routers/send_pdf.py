@@ -2,7 +2,7 @@ import os
 import smtplib
 import traceback
 import glob
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.models import Employee
@@ -38,18 +38,22 @@ def create_report_for_managers(
     try:
         employees = db.query(Employee).filter(Employee.manager_id == current_user.id).all()
         if not employees:
-            return {"generated": False, "error": "No employees found for this manager."}
-        
+            raise HTTPException(status_code=404, detail="No employees found for this manager.")
+
         excel_bytes = generate_employee_salary_report(db, employees=employees)
         archive_path = os.path.join(archive_dir, f"salary_report_{timestamp}.xlsx")
         with open(archive_path, "wb") as f:
             f.write(excel_bytes)
-        return {"generated": True, "file": archive_path}
+
+        headers = {
+            'Content-Disposition': f'attachment; filename="salary_report_{timestamp}.xlsx"'
+        }
+        return Response(content=excel_bytes, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers=headers)
     except Exception as e:
         print(f"Error generating Excel report: {e}")
         traceback.print_exc()
         return {"generated": False, "error": str(e)}
-    
+
 
 @router.post("/createPdfForEmployees")
 def create_pdf_for_employees(

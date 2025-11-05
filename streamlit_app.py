@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import uuid
 
 API_URL = "http://localhost:8000"  
 
@@ -26,7 +27,37 @@ def logout():
 
 def generate_aggregated_report():
     st.write("Generating aggregated employee data report...")
+    token = st.session_state.get("token")
+    if not token:
+        st.error("You must be logged in.")
+        return
 
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": str(uuid.uuid4())
+    }
+    response = requests.post(f"{API_URL}/createReportForManagers", headers=headers)
+    if response.status_code == 200 and response.headers.get("content-type", "").startswith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
+        st.success("Report generated successfully!")
+        st.download_button(
+            label="Download Aggregated Employee Data Report",
+            data=response.content,
+            file_name="salary_report.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        try:
+            error_json = response.json()
+            error_detail = error_json.get("detail") or error_json.get("error") or response.text
+        except Exception:
+            error_detail = response.text
+
+        if error_detail:
+            if isinstance(error_detail, str):
+                error_detail = error_detail.split(':', 1)[-1].strip() if ':' in error_detail else error_detail
+            st.error(f"No report generated: {error_detail}")
+        else:
+            st.error("No report generated: Unknown error.")
 
 def generate_employee_report():
     st.write("Generating individual employee salary report...")

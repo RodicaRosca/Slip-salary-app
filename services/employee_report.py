@@ -5,11 +5,12 @@ from models.models import Employee, SalarySlip
 from datetime import date
 from fastapi import HTTPException
 
-def generate_employee_salary_report(session: Session) -> bytes:
+def generate_employee_salary_report(session: Session, employees=None) -> bytes:
     try:
         today = date.today()
         month_start = today.replace(day=1)
-        employees = session.query(Employee).all()
+        if employees is None:
+            employees = session.query(Employee).all()
         data = []
         for emp in employees:
             slip = (
