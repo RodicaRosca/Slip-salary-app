@@ -10,6 +10,10 @@ load_dotenv()
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 
+if "idempotency_key" not in st.session_state:
+    st.session_state["idempotency_key"] = str(uuid.uuid4())
+
+
 def login():
     st.title("Login")
     username = st.text_input("Username")
@@ -44,11 +48,13 @@ def generate_aggregated_report():
         st.error("You must be logged in.")
         return
 
+    if "agg_report_idempotency_key" not in st.session_state:
+        st.session_state["agg_report_idempotency_key"] = str(uuid.uuid4())
     headers = {
         "Authorization": f"Bearer {token}",
-        "Idempotency-Key": str(uuid.uuid4())
+        "Idempotency-Key": st.session_state["agg_report_idempotency_key"]
     }
-    response = requests.post(f"{API_URL}/createReportForManagers", headers=headers)
+    response = requests.post(f"{API_URL}/createAggregatedEmployeeData", headers=headers)
     if response.status_code == 200 and response.content:
         try:
             result = response.json()
@@ -82,9 +88,11 @@ def generate_employee_report():
         st.error("You must be logged in.")
         return
 
+    if "emp_report_idempotency_key" not in st.session_state:
+        st.session_state["emp_report_idempotency_key"] = str(uuid.uuid4())
     headers = {
         "Authorization": f"Bearer {token}",
-        "Idempotency-Key": str(uuid.uuid4())
+        "Idempotency-Key": st.session_state["emp_report_idempotency_key"]
     }
 
     try:
@@ -115,9 +123,11 @@ def send_salary_pdf():
         return
     
 
+    if "send_pdf_idempotency_key" not in st.session_state:
+        st.session_state["send_pdf_idempotency_key"] = str(uuid.uuid4())
     headers = {
         "Authorization": f"Bearer {token}",
-        "Idempotency-Key": str(uuid.uuid4())
+        "Idempotency-Key": st.session_state["send_pdf_idempotency_key"]
     }
     try:
         response = requests.post(f"{API_URL}/sendPdfToEmployees", headers=headers)
@@ -148,12 +158,14 @@ def send_aggregated_employee_data():
         return
     
 
+    if "send_agg_data_idempotency_key" not in st.session_state:
+        st.session_state["send_agg_data_idempotency_key"] = str(uuid.uuid4())
     headers = {
         "Authorization": f"Bearer {token}",
-        "Idempotency-Key": str(uuid.uuid4())
+        "Idempotency-Key": st.session_state["send_agg_data_idempotency_key"]
     }
     try:
-        response = requests.post(f"{API_URL}//sendReportToManagers", headers=headers)
+        response = requests.post(f"{API_URL}/sendAggregatedEmployeeData", headers=headers)
         if response.status_code == 200 and response.content:
             try:
                 result = response.json()

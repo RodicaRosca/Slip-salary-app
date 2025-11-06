@@ -2,10 +2,15 @@ import logging
 import time
 from fastapi import Request
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    filename='app.log', 
+    filemode='a'         
+)
 
 sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
-sqlalchemy_logger.setLevel(logging.ERROR)  
+sqlalchemy_logger.setLevel(logging.ERROR)
 sqlalchemy_logger.propagate = False
 
 def setup_request_logging(app):
